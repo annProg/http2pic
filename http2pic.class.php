@@ -11,44 +11,34 @@
  * @link       https://http2pic.haschek.at
  */
 
-
-//
-// Stuff you can edit
-//
-
-// if true, will save all cmd queries
-define(DEBUG,false);
-
-define(MAXTIMEOUT,30);
-define(ONFAILIMAGE, __DIR__.'/img/pagefailed.jpg');
-define(ONDOMAINFAILIMAGE, __DIR__.'/img/domainfailed.jpg');
-
-//rendering engine: wkhtmltoimage or phantomjs
-define(RENDERINGENGINE,'wkhtmltoimage');
-
-//location of wkhtmltoimage
-define(WKHTMLTOIMAGEPATH,'/usr/sbin/wkhtmltoimage');
-
-//location of phantomJS
-define(PHANTOMJSPATH,__DIR__.'/phantomjs');
-
-//where shoud we store cached images
-define(CACHEDIR,__DIR__.'/cache/');
-
-
-
-
 //
 // Only edit from here if you know what you are doing
 //
 class http2pic
 {
+	private $config = array(
+		'debug' => true,
+		'maxtimeout' => 10,
+		'onfailimage' => 'img/pagefailed.jpg',
+		'ondomainfailimage' => 'img/domainfailed.jpg',
+		'renderingengine' => 'phantomjs',
+		'wkhtmltoimagepath' => '/usr/sbin/wkhtmltoimage',
+		'phantomjspath' => 'phantomjs',
+		'cachedir' => 'cache/'
+	);
 	private $params = array();
-	function __construct($params)
+	function __construct($cfg, $params)
 	{
+		foreach($config as $key => $val)
+		{
+			if(array_key_exists($key, $cfg))
+			{
+				$this->config[$key] = $cfg[$key];
+			}
+		}
 		//try to create the cache folder if not exists
-		if (!is_dir(CACHEDIR)) {
-			mkdir(CACHEDIR);
+		if (!is_dir($this->config['cachedir'])) {
+			mkdir($this->config['cachedir']);
 		}
 		
 		$this->params = $params;
@@ -69,7 +59,7 @@ class http2pic
 		}
 		
 		//validate timeout
-		if (!$this->params['timeout'] || !is_numeric($this->params['timeout']) || ($this->params['timeout'] > MAXTIMEOUT || $this->params['timeout'] < 1))
+		if (!$this->params['timeout'] || !is_numeric($this->params['timeout']) || ($this->params['timeout'] > $this->config['maxtimeout'] || $this->params['timeout'] < 1))
 			$this->params['timeout'] = 10;
 			
 		//validate viewport
@@ -92,12 +82,12 @@ class http2pic
 		}
 		
 		if(!$this->params['onfail'])
-			$this->params['onfail'] = ONFAILIMAGE;
+			$this->params['onfail'] = $this->config['onfailimage'];
 		else
 			$this->params['onfail'] = rawurldecode($this->params['onfail']);
 		
 		if(!$this->params['ondomainfail'])
-			$this->params['ondomainfail'] = ONDOMAINFAILIMAGE;
+			$this->params['ondomainfail'] = $this->config['ondomainfailimage'];
 		else
 			$this->params['ondomainfail'] = rawurldecode($this->params['ondomainfail']);
 			

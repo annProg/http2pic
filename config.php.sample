@@ -1,0 +1,27 @@
+<?php
+/**
+ * Usage:
+ * File Name: config.php
+ * Author: annhe  
+ * Mail: i@annhe.net
+ * Created Time: 2017-07-25 11:20:15
+ **/
+
+
+$_config = array();
+
+$_config['debug'] = true;
+$_config['onfailimage'] = 'img/pagefailed.jpg';
+$_config['ondomainfailimage'] = 'img/domainfailed.jpg';
+$_config['renderingengine'] = 'phantomjs';
+$_config['wkhtmltoimagepath'] = '/usr/sbin/wkhtmltoimage';
+$_config['phantomjspath'] = '/usr/lib/node_modules/phantomjs2/lib/phantom/bin/phantomjs';
+$_config['cachedir'] = 'cache/';
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
+$_config['maxtimeout'] = 30;
