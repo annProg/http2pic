@@ -23,6 +23,6 @@ page.settings['javascriptEnabled'] = (js=="no")?false:true;
             window.setTimeout(function () {
                 page.render(output);
                 phantom.exit();
-            }, 200);
+            }, 1000);
         }
     });

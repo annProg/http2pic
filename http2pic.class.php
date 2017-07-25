@@ -29,7 +29,7 @@ class http2pic
 	private $params = array();
 	function __construct($cfg, $params)
 	{
-		foreach($config as $key => $val)
+		foreach($this->config as $key => $val)
 		{
 			if(array_key_exists($key, $cfg))
 			{
@@ -94,9 +94,9 @@ class http2pic
 	
 		//validate URL and check if exists
 		if ($this->isBase64($this->params['url']))
-			$this->params['url'] = base64_decode($url);
+			$this->params['url'] = base64_decode($this->params['url']);
 		else
-			$this->params['url'] = rawurldecode($_GET['url']);
+			$this->params['url'] = rawurldecode($this->params['url']);
 		
 			//if the url is not valid or not responding, show onfail image and leave
 		if(!$this->isURLValid($this->params['url']) || !(($reachableResult = $this->isURLReachable($this->params['url'])) == 0))
@@ -120,11 +120,11 @@ class http2pic
 		
 		
 		//prepare file name
+		$hash = md5($this->params['url']).'-'.preg_replace("/[^A-Za-z0-9 ]/", '', $this->params['url']).'.'.$this->params['type'];
 		$this->params['cache'] = $this->trimToAlphaNumeric($this->params['cache']);
-		$hash = $this->params['cache'].'-'.preg_replace("/[^A-Za-z0-9 ]/", '', $this->params['url']).'.'.$this->params['type'];
-		if (!$this->params['cache'])
-			$hash = md5(time().rand(1,2000)).$hash;
-		$this->params['file'] = CACHEDIR.$hash;
+		//if (!$this->params['cache'])
+			//$hash = md5(time().rand(1,2000)).$hash;
+		$this->params['file'] = $this->config['cachedir'].$hash;
 		
 		$this->render();
 		
@@ -134,11 +134,11 @@ class http2pic
 	function render()
 	{
 		//if phantomjs is selected and installed
-		if(RENDERINGENGINE=='phantomjs' && file_exists(PHANTOMJSPATH))
+		if($this->config['renderingengine']=='phantomjs' && file_exists($this->config['phantomjspath']))
 			return $this->renderPagePHANTOMJS();
 		
 		//no? well ok how about WKHTMLToImage?
-		else if(RENDERINGENGINE=='wkhtmltoimage' && file_exists(WKHTMLTOIMAGEPATH))
+		else if($this->config['renderingengine']=='wkhtmltoimage' && file_exists($this->config['wkhtmltoimagepath']))
 			return $this->renderPageWKHTMLTOIMAGE();
 			
 		//you're fucked
@@ -152,7 +152,7 @@ class http2pic
 	**/
 	function renderPagePHANTOMJS()
 	{
-		$cmd = 'timeout '.$this->params['timeout'].' '.PHANTOMJSPATH;
+		$cmd = 'timeout '.$this->params['timeout'].' '.$this->config['phantomjspath'];
 		$cmd.= ' --ignore-ssl-errors=yes --ssl-protocol=any '.__DIR__.'/phantom.js ';
 		
 		$cmd.= ($this->params['url']);
@@ -162,11 +162,14 @@ class http2pic
 		$cmd.= ','.$this->params['js'];
 		
 		$cmd = escapeshellcmd($cmd);
-		shell_exec($cmd);
+		if($this->params['cache'] == "set" || !file_exists($this->params['file']))
+		{
+			shell_exec($cmd);
+		}
 		$this->params['cmd'] = $cmd;
 		
 		$this->postRender();
-		if(DEBUG)
+		if($this->config['debug'])
 		{
 			$fp = fopen('debug.log', 'a');
 			fwrite($fp, $cmd."\n");
@@ -183,7 +186,7 @@ class http2pic
 		//escapeshellarg
 		
 		//timeout
-		$cmd = 'timeout '.$this->params['timeout'].' '.WKHTMLTOIMAGEPATH;
+		$cmd = 'timeout '.$this->params['timeout'].' '.$this->config['wkhtmltoimagepath'];
 		
 		//viewport vp_w und vp_h
 		if($this->params['vp_w'])
@@ -206,12 +209,15 @@ class http2pic
 		$cmd.=' '.escapeshellarg($this->params['file']);
 			
 		$cmd = escapeshellcmd($cmd);
-		shell_exec($cmd);
+		if($this->params['cache'] == "set" || !file_exists($this->params['file']))
+		{
+			shell_exec($cmd);
+		}
 		$this->params['cmd'] = $cmd;
 		
 		$this->postRender();
 
-		if(DEBUG)
+		if($this->config['debug'])
 		{
 			$fp = fopen('debug.log', 'a');
 			fwrite($fp, $cmd."\n");
@@ -247,10 +253,6 @@ class http2pic
 			$result = imagecreatefromjpeg($this->params['file']);
 			imagejpeg($result, NULL, 100);
 		}
-		
-		
-		//if no cache  value specified: delete the image
-		if(!$this->params['cache']) unlink($this->params['file']);
 	}
 	
 	function resizeImage($file)

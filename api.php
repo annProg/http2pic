@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL ^ E_NOTICE);
+require('config.php');
 include_once('http2pic.class.php');
 
 $url = $_GET['url'];
@@ -19,5 +21,5 @@ $params = array('url'=>$url,
 				'cache'=>$cache,
 				'onfail'=>$onfail);
 
-$http2pic = new http2pic($params);
+$http2pic = new http2pic($_config, $params);
 //echo nl2br(print_r($http2pic->debug(),true));

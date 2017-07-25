@@ -1,9 +1,6 @@
 <?php
-$a = apache_request_headers();
-define('DOMAIN', $a['Host']);
+define('DOMAIN', trim($_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'], '/'));
 define('CONN', (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == "")?'http':'https');
-
-
 ?><!DOCTYPE html>
 <html lang="en">
 
