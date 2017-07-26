@@ -21,8 +21,6 @@ class http2pic
 		'maxtimeout' => 10,
 		'onfailimage' => 'img/pagefailed.jpg',
 		'ondomainfailimage' => 'img/domainfailed.jpg',
-		'renderingengine' => 'phantomjs',
-		'wkhtmltoimagepath' => '/usr/sbin/wkhtmltoimage',
 		'phantomjspath' => 'phantomjs',
 		'cachedir' => 'cache/'
 	);
@@ -131,26 +129,10 @@ class http2pic
 		return true;
 	}
 	
-	function render()
-	{
-		//if phantomjs is selected and installed
-		if($this->config['renderingengine']=='phantomjs' && file_exists($this->config['phantomjspath']))
-			return $this->renderPagePHANTOMJS();
-		
-		//no? well ok how about WKHTMLToImage?
-		else if($this->config['renderingengine']=='wkhtmltoimage' && file_exists($this->config['wkhtmltoimagepath']))
-			return $this->renderPageWKHTMLTOIMAGE();
-			
-		//you're fucked
-		else
-			throw new Exception('No valid rendering engine found');
-	}
-	
-	
 	/**
 	* Render using PhantomJS
 	**/
-	function renderPagePHANTOMJS()
+	function render()
 	{
 		$cmd = 'timeout '.$this->params['timeout'].' '.$this->config['phantomjspath'];
 		$cmd.= ' --ignore-ssl-errors=yes --ssl-protocol=any '.__DIR__.'/phantom.js ';
@@ -165,67 +147,17 @@ class http2pic
 		if($this->params['cache'] == "set" || !file_exists($this->params['file']))
 		{
 			shell_exec($cmd);
+			if($this->config['debug'])
+			{
+				$fp = fopen('debug.log', 'a');
+				fwrite($fp, $cmd."\n");
+				fclose($fp);
+			}
 		}
 		$this->params['cmd'] = $cmd;
-		
 		$this->postRender();
-		if($this->config['debug'])
-		{
-			$fp = fopen('debug.log', 'a');
-			fwrite($fp, $cmd."\n");
-			fclose($fp);
-		}
 		return $cmd;
 	}
-	
-	/**
-	* Render using WKHTMLToImage
-	**/
-	function renderPageWKHTMLTOIMAGE()
-	{
-		//escapeshellarg
-		
-		//timeout
-		$cmd = 'timeout '.$this->params['timeout'].' '.$this->config['wkhtmltoimagepath'];
-		
-		//viewport vp_w und vp_h
-		if($this->params['vp_w'])
-			$cmd.=' --width '.$this->params['vp_w'];
-		if($this->params['vp_h'])
-			$cmd.=' --height '.$this->params['vp_h'];
-			
-		//js or no js
-		if($this->params['js']=='no')
-			$cmd.=' -n';
-			
-		//png or jpg (default)
-		if($this->params['type']=='png')
-			$cmd.=' -f png';
-		
-		//add url to cmd
-		$cmd.=' '.escapeshellarg($this->params['url']);
-		
-		//add storage path to cmd
-		$cmd.=' '.escapeshellarg($this->params['file']);
-			
-		$cmd = escapeshellcmd($cmd);
-		if($this->params['cache'] == "set" || !file_exists($this->params['file']))
-		{
-			shell_exec($cmd);
-		}
-		$this->params['cmd'] = $cmd;
-		
-		$this->postRender();
-
-		if($this->config['debug'])
-		{
-			$fp = fopen('debug.log', 'a');
-			fwrite($fp, $cmd."\n");
-			fclose($fp);
-		}
-		return $cmd;
-	}
-	
 	
 	/**
 	* Called after a render took place.
@@ -243,13 +175,13 @@ class http2pic
 		if ($this->params['type'] === 'png') {
 			
 			header('Content-Type: image/png');
-			header('Content-Disposition: inline; filename="'.$this->trimToAlphaNumeric($this->params['url']).'.png"');
+			header('Content-Disposition: inline; filename="'.$this->params['file'] . '"');
 			$result = imagecreatefrompng($this->params['file']);
 			imagepng($result, NULL, 9);
 		}
 		else {
 			header('Content-Type: image/jpeg');
-			header('Content-Disposition: inline; filename="'.$this->trimToAlphaNumeric($this->params['url']).'.jpg"');
+			header('Content-Disposition: inline; filename="'.$this->params['file'] . '"');
 			$result = imagecreatefromjpeg($this->params['file']);
 			imagejpeg($result, NULL, 100);
 		}

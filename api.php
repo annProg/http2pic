@@ -3,10 +3,20 @@ error_reporting(E_ALL ^ E_NOTICE);
 require('config.php');
 include_once('http2pic.class.php');
 
+function set($param) {
+	global $_default;
+	if(isset($_GET[$param])) {
+		return($_GET[$param]);
+	}else
+	{
+		return($_default[$param]);
+	}
+}
+
 $url = $_GET['url'];
 $type = $_GET['type'];
-$timeout = $_GET['timeout'];
-$viewport = $_GET['viewport'];
+$timeout = set('timeout');
+$viewport = set('viewport');
 $js = $_GET['js'];
 $resizewidth = $_GET['width'];
 $cache = $_GET['cache'];
